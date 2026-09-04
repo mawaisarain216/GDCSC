@@ -1,0 +1,252 @@
+@import "tailwindcss";
+
+/* Default (fallback) design tokens — overridden per-request by <ThemeStyle>,
+   which reads live values from Settings → Appearance in the admin panel. */
+:root {
+  --primary: #0b5d46;
+  --primary-dark: #073f30;
+  --secondary: #116a55;
+  --accent: #d4a72c;
+  --bg: #f7f7f4;
+  --surface: #ffffff;
+  --text: #1f2a24;
+  --text-muted: #5b6b63;
+  --header-bg: #0b5d46;
+  --header-text: #ffffff;
+  --footer-bg: #0a3d2e;
+  --footer-text: #e7efea;
+  --radius: 12px;
+  --container-width: 1240px;
+  --section-spacing: 88px;
+  --font-heading-family: "Poppins", "Segoe UI", sans-serif;
+  --font-body-family: "Inter", "Segoe UI", sans-serif;
+  --base-font-size: 16px;
+  --h1-size: 48px;
+  --h2-size: 34px;
+  --h3-size: 24px;
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-header-bg: var(--header-bg);
+  --color-header-text: var(--header-text);
+  --color-footer-bg: var(--footer-bg);
+  --color-footer-text: var(--footer-text);
+  --font-heading: var(--font-heading-family);
+  --font-body: var(--font-body-family);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Visible keyboard focus ring everywhere — a11y baseline. Uses :focus-visible
+   so it only shows for keyboard/assistive-tech navigation, not mouse clicks. */
+:focus-visible {
+  outline: 2.5px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2.5px solid var(--accent);
+  outline-offset: 2px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body-family);
+  font-size: var(--base-font-size);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading-family);
+}
+
+h1 {
+  font-size: var(--h1-size);
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: var(--h2-size);
+  line-height: 1.15;
+}
+
+h3 {
+  font-size: var(--h3-size);
+  line-height: 1.25;
+}
+
+.container-site {
+  max-width: var(--container-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+.section-y {
+  padding-top: var(--section-spacing);
+  padding-bottom: var(--section-spacing);
+}
+
+.card-surface {
+  background: var(--surface);
+  border-radius: var(--radius);
+}
+
+.rounded-theme {
+  border-radius: var(--radius);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  padding: 0.7rem 1.4rem;
+  border-radius: var(--radius);
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-solid {
+  background-image: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 82%, black));
+  color: #fff;
+  box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--primary) 55%, transparent);
+}
+
+.btn-solid:hover {
+  opacity: 0.94;
+  box-shadow: 0 6px 18px -4px color-mix(in srgb, var(--primary) 65%, transparent);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+}
+
+.btn-soft {
+  background: color-mix(in srgb, var(--primary) 12%, white);
+  color: var(--primary);
+}
+
+.btn-accent {
+  background-image: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 75%, white));
+  color: #2b2205;
+  box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.btn-accent:hover {
+  box-shadow: 0 6px 18px -4px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal-up {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-up {
+    animation: none;
+  }
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--text) 25%, transparent);
+}
+
+.prose-content :where(p) {
+  margin-bottom: 1rem;
+  line-height: 1.75;
+  color: var(--text);
+}
+
+.prose-content :where(h2, h3) {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* When printing a gate pass from the public status-checker page, hide
+   everything except the pass itself — otherwise the header/nav/footer print
+   along with it. */
+@media print {
+  body.printing-gate-pass * {
+    visibility: hidden;
+  }
+  body.printing-gate-pass #gate-pass-print,
+  body.printing-gate-pass #gate-pass-print * {
+    visibility: visible;
+  }
+  body.printing-gate-pass #gate-pass-print {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+}
