@@ -81,7 +81,10 @@ export async function saveUploadedFile(
     console.warn(`[upload] Rejected "${file.name}" — file contents don't match a valid ${ext} file.`);
     return null;
   }
-  if (ext === ".svg") buffer = sanitizeSvg(buffer);
+ if (ext === ".svg") {
+  const sanitized = sanitizeSvg(buffer);
+  buffer = Buffer.from(sanitized);
+}
 
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${slugifyFilename(file.name || "file")}`;
   const blobPath = `uploads/${subdir}/${filename}`;

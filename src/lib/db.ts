@@ -10,8 +10,11 @@ import crypto from "node:crypto";
  * the Vercel project.
  */
 const DATABASE_URL = process.env.DATABASE_URL;
+
 if (!DATABASE_URL) {
-  throw new Error("DATABASE_URL is required. Add your Neon connection string to the environment.");
+  throw new Error(
+    "DATABASE_URL is required. Add your Neon connection string to the environment."
+  );
 }
 
 const sqlClient = neon(DATABASE_URL);
@@ -24,10 +27,14 @@ type PreparedStatement = {
   run: (...args: SqlValue[]) => Promise<{ rowCount: number }>;
 };
 
-// PostgreSQL folds unquoted identifiers to lowercase. These are the camelCase
-// column names retained from the original SQLite schema, so quote them while
-// leaving table names and snake_case columns untouched.
+/**
+ * PostgreSQL folds unquoted identifiers to lowercase.
+ *
+ * These are the camelCase columns retained from the original SQLite schema.
+ * They must remain quoted when used in PostgreSQL queries.
+ */
 const CAMEL_COLUMNS = [
+  "isOpen",
   "createdAt",
   "passwordHash",
   "lastLoginAt",
@@ -75,22 +82,30 @@ const CAMEL_COLUMNS = [
   "order_num",
 ].sort((a, b) => b.length - a.length);
 
+/**
+ * Convert SQL written for the original SQLite adapter into PostgreSQL syntax.
+ */
 function adaptSql(sql: string): string {
+  // SQLite: INSERT OR IGNORE
+  // PostgreSQL: INSERT ... ON CONFLICT DO NOTHING
+  const hadInsertIgnore = /INSERT\s+OR\s+IGNORE/i.test(sql);
+
   let out = sql.replace(/INSERT\s+OR\s+IGNORE/gi, "INSERT");
 
-  // Convert SQLite's ? parameters to PostgreSQL's $1, $2, ... parameters.
+  // Convert SQLite ? parameters to PostgreSQL $1, $2, $3...
   let index = 0;
+
   out = out.replace(/\?/g, () => `$${++index}`);
 
-  // Quote retained camelCase column names. Word boundaries keep this safe
-  // for values and longer identifiers.
+  // PostgreSQL folds unquoted identifiers to lowercase.
+  // Quote the camelCase columns from the original schema.
   for (const column of CAMEL_COLUMNS) {
-    const re = new RegExp(`(?<![\\w\"])${column}(?![\\w\"])`, "g");
+    const re = new RegExp(`(?<![\\w"])${column}(?![\\w"])`, "g");
     out = out.replace(re, `"${column}"`);
   }
 
-  // INSERT OR IGNORE in SQLite means "do nothing on any conflict".
-  if (/^\s*INSERT\b/i.test(out) && /\bIGNORE\b/i.test(sql)) {
+  // PostgreSQL equivalent of SQLite INSERT OR IGNORE.
+  if (hadInsertIgnore && /^\s*INSERT\b/i.test(out)) {
     out += " ON CONFLICT DO NOTHING";
   }
 
@@ -108,6 +123,7 @@ const schemaStatements = [
     "lastLoginAt" TEXT NOT NULL DEFAULT '',
     "lastLoginIp" TEXT NOT NULL DEFAULT ''
   )`,
+
   `CREATE TABLE IF NOT EXISTS login_attempts (
     id TEXT PRIMARY KEY,
     identifier TEXT NOT NULL,
@@ -115,6 +131,7 @@ const schemaStatements = [
     success INTEGER NOT NULL DEFAULT 0,
     "createdAt" TEXT NOT NULL
   )`,
+
   `CREATE TABLE IF NOT EXISTS settings (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     "siteName" TEXT NOT NULL DEFAULT 'Govt. Boys Degree College Shahpur Chakar',
@@ -138,6 +155,7 @@ const schemaStatements = [
     "customCss" TEXT NOT NULL DEFAULT '',
     "updatedAt" TEXT NOT NULL
   )`,
+
   `CREATE TABLE IF NOT EXISTS content_blocks (
     id TEXT PRIMARY KEY,
     key TEXT UNIQUE NOT NULL,
@@ -146,6 +164,7 @@ const schemaStatements = [
     value TEXT NOT NULL DEFAULT '',
     "updatedAt" TEXT NOT NULL
   )`,
+
   `CREATE TABLE IF NOT EXISTS menu_items (
     id TEXT PRIMARY KEY,
     label TEXT NOT NULL,
@@ -155,6 +174,7 @@ const schemaStatements = [
     "openInNewTab" INTEGER NOT NULL DEFAULT 0,
     "parentId" TEXT
   )`,
+
   `CREATE TABLE IF NOT EXISTS notices (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
@@ -164,6 +184,7 @@ const schemaStatements = [
     "isPinned" INTEGER NOT NULL DEFAULT 0,
     "publishedAt" TEXT NOT NULL
   )`,
+
   `CREATE TABLE IF NOT EXISTS news_events (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
@@ -174,6 +195,7 @@ const schemaStatements = [
     "eventDate" TEXT,
     "publishedAt" TEXT NOT NULL
   )`,
+
   `CREATE TABLE IF NOT EXISTS slides (
     id TEXT PRIMARY KEY,
     "imageUrl" TEXT NOT NULL,
@@ -184,6 +206,7 @@ const schemaStatements = [
     order_num INTEGER NOT NULL DEFAULT 0,
     "isActive" INTEGER NOT NULL DEFAULT 1
   )`,
+
   `CREATE TABLE IF NOT EXISTS gallery_images (
     id TEXT PRIMARY KEY,
     url TEXT NOT NULL,
@@ -191,6 +214,7 @@ const schemaStatements = [
     category TEXT NOT NULL DEFAULT 'Campus',
     order_num INTEGER NOT NULL DEFAULT 0
   )`,
+
   `CREATE TABLE IF NOT EXISTS documents (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
@@ -198,6 +222,7 @@ const schemaStatements = [
     category TEXT NOT NULL DEFAULT 'General',
     "uploadedAt" TEXT NOT NULL
   )`,
+
   `CREATE TABLE IF NOT EXISTS departments (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -207,6 +232,7 @@ const schemaStatements = [
     "imageUrl" TEXT NOT NULL DEFAULT '',
     order_num INTEGER NOT NULL DEFAULT 0
   )`,
+
   `CREATE TABLE IF NOT EXISTS programs (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
@@ -217,6 +243,7 @@ const schemaStatements = [
     "departmentId" TEXT,
     order_num INTEGER NOT NULL DEFAULT 0
   )`,
+
   `CREATE TABLE IF NOT EXISTS faculty_members (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -227,6 +254,7 @@ const schemaStatements = [
     "departmentId" TEXT,
     order_num INTEGER NOT NULL DEFAULT 0
   )`,
+
   `CREATE TABLE IF NOT EXISTS achievements (
     id TEXT PRIMARY KEY,
     label TEXT NOT NULL,
@@ -234,6 +262,7 @@ const schemaStatements = [
     icon TEXT NOT NULL DEFAULT 'Users',
     order_num INTEGER NOT NULL DEFAULT 0
   )`,
+
   `CREATE TABLE IF NOT EXISTS admission_programs (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -242,6 +271,7 @@ const schemaStatements = [
     "isOpen" INTEGER NOT NULL DEFAULT 1,
     order_num INTEGER NOT NULL DEFAULT 0
   )`,
+
   `CREATE TABLE IF NOT EXISTS admission_form_fields (
     id TEXT PRIMARY KEY,
     section TEXT NOT NULL DEFAULT 'PERSONAL',
@@ -253,6 +283,7 @@ const schemaStatements = [
     enabled INTEGER NOT NULL DEFAULT 1,
     order_num INTEGER NOT NULL DEFAULT 0
   )`,
+
   `CREATE TABLE IF NOT EXISTS contact_messages (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -263,6 +294,7 @@ const schemaStatements = [
     "isRead" INTEGER NOT NULL DEFAULT 0,
     "submittedAt" TEXT NOT NULL
   )`,
+
   `CREATE TABLE IF NOT EXISTS admission_applications (
     id TEXT PRIMARY KEY,
     "applicationNo" TEXT UNIQUE NOT NULL,
@@ -280,24 +312,37 @@ const schemaStatements = [
 let schemaReady: Promise<void> | null = null;
 
 /**
- * Ensure the PostgreSQL schema exists. A short transaction with a PostgreSQL
- * advisory lock prevents concurrent Next.js/Vercel workers from racing while
- * creating the same tables.
+ * Ensure the PostgreSQL schema exists.
+ *
+ * The advisory lock prevents concurrent Next.js/Vercel workers from racing
+ * while creating the same tables.
  */
 export async function initSchema(): Promise<void> {
   if (!schemaReady) {
     schemaReady = (async () => {
       const client = new Client(DATABASE_URL);
+
       await client.connect();
+
       try {
         await client.query("BEGIN");
-        await client.query("SELECT pg_advisory_xact_lock(27102026)");
+
+        await client.query(
+          "SELECT pg_advisory_xact_lock(27102026)"
+        );
+
         for (const statement of schemaStatements) {
           await client.query(statement);
         }
+
         await client.query("COMMIT");
       } catch (error) {
-        try { await client.query("ROLLBACK"); } catch {}
+        try {
+          await client.query("ROLLBACK");
+        } catch {
+          // Ignore rollback errors.
+        }
+
         throw error;
       } finally {
         await client.end();
@@ -307,6 +352,7 @@ export async function initSchema(): Promise<void> {
       throw error;
     });
   }
+
   return schemaReady;
 }
 
@@ -315,28 +361,54 @@ const schemaReadyForQueries = initSchema();
 export const db = {
   prepare(sqlText: string): PreparedStatement {
     const adaptedSql = adaptSql(sqlText);
+
     return {
       async get(...args: SqlValue[]) {
         await schemaReadyForQueries;
-        const rows = await sqlClient.query(adaptedSql, args);
-        return (rows[0] as Record<string, unknown> | undefined) ?? undefined;
+
+        const rows = await sqlClient.query(
+          adaptedSql,
+          args
+        );
+
+        return (
+          (rows[0] as Record<string, unknown> | undefined) ??
+          undefined
+        );
       },
+
       async all(...args: SqlValue[]) {
         await schemaReadyForQueries;
-        const rows = await sqlClient.query(adaptedSql, args);
+
+        const rows = await sqlClient.query(
+          adaptedSql,
+          args
+        );
+
         return rows as Record<string, unknown>[];
       },
+
       async run(...args: SqlValue[]) {
         await schemaReadyForQueries;
-        const rows = await sqlClient.query(adaptedSql, args);
-        return { rowCount: rows.length };
+
+        const rows = await sqlClient.query(
+          adaptedSql,
+          args
+        );
+
+        return {
+          rowCount: rows.length,
+        };
       },
     };
   },
 };
 
 export function genId(prefix = ""): string {
-  return (prefix ? prefix + "_" : "") + crypto.randomBytes(12).toString("hex");
+  return (
+    (prefix ? prefix + "_" : "") +
+    crypto.randomBytes(12).toString("hex")
+  );
 }
 
 export function nowIso(): string {
