@@ -1,6 +1,7 @@
-import { getAllContentBlocks } from "@/lib/repo";
-import { AdminCard, AdminPageHeader, inputClass, labelClass, SubmitButton } from "@/components/admin/ui";
+﻿import { getAllContentBlocks } from "@/lib/repo";
+import { AdminCard, AdminPageHeader, labelClass, SubmitButton } from "@/components/admin/ui";
 import { saveContentBlocks } from "../actions";
+import PrincipalPhotoUpload from "./PrincipalPhotoUpload";
 import { CheckCircle2 } from "lucide-react";
 
 export default async function ContentPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
@@ -24,14 +25,33 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
         {blocks.map((b) => (
           <AdminCard key={b.id} className="p-5">
             <label className={labelClass}>{b.label}</label>
+
             {b.type === "IMAGE" ? (
-              <input name={b.key} defaultValue={b.value} placeholder="/uploads/... or https://..." className={inputClass} />
+              <PrincipalPhotoUpload initialUrl={b.value} />
             ) : b.type === "HTML" ? (
-              <textarea name={b.key} defaultValue={b.value} rows={5} className={inputClass} />
+              <textarea
+                name={b.key}
+                defaultValue={b.value}
+                rows={5}
+                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B5D46]/30 focus:border-[#0B5D46] bg-white"
+              />
             ) : (
-              <textarea name={b.key} defaultValue={b.value} rows={2} className={inputClass} />
+              <textarea
+                name={b.key}
+                defaultValue={b.value}
+                rows={2}
+                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B5D46]/30 focus:border-[#0B5D46] bg-white"
+              />
             )}
-            <p className="text-xs text-gray-400 mt-1">Key: {b.key}{b.type === "HTML" ? " — supports basic HTML tags like <p>, <strong>, <br>" : ""}</p>
+
+            {b.type !== "IMAGE" && (
+              <p className="text-xs text-gray-400 mt-1">
+                Key: {b.key}
+                {b.type === "HTML"
+                  ? " — supports basic HTML tags like <p>, <strong>, <br>"
+                  : ""}
+              </p>
+            )}
           </AdminCard>
         ))}
 
