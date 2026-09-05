@@ -35,13 +35,16 @@ export default async function FacultyAdminPage({ searchParams }: { searchParams:
           <div className="divide-y divide-gray-100">
             {faculty.map((f) => (
               <div key={f.id} className="flex items-center gap-4 p-4">
-                <div className="w-10 h-10 rounded-full bg-gray-100 relative overflow-hidden shrink-0 flex items-center justify-center text-gray-400">
-                  {f.photoUrl ? <Image src={f.photoUrl} alt={f.name} fill className="object-cover" /> : <User size={16} />}
+                <div className="w-12 h-12 rounded-lg bg-gray-100 relative overflow-hidden shrink-0 flex items-center justify-center text-gray-400">
+                  {f.photoUrl ? <Image src={f.photoUrl} alt={f.name} fill className="object-cover" sizes="48px" /> : <User size={16} />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900">{f.name}</p>
                   <p className="text-xs text-gray-400">
                     {f.designation}{f.departmentId && ` · ${deptMap.get(f.departmentId) || ""}`}
+                    {f.departmentId && departments.some((d) => d.id === f.departmentId && d.headFacultyId === f.id) && (
+                      <span className="ml-2 text-[#0B5D46] font-medium">· HOD</span>
+                    )}
                   </p>
                 </div>
                 <Link href={`/admin/academics/faculty/${f.id}/edit`} aria-label={`Edit ${f.name}`} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">

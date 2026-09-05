@@ -67,6 +67,7 @@ const CAMEL_COLUMNS = [
   "isActive",
   "imageUrl",
   "headName",
+  "headFacultyId",
   "departmentId",
   "photoUrl",
   "applicationNo",
@@ -229,6 +230,7 @@ const schemaStatements = [
     slug TEXT UNIQUE NOT NULL,
     description TEXT NOT NULL DEFAULT '',
     "headName" TEXT NOT NULL DEFAULT '',
+    "headFacultyId" TEXT,
     "imageUrl" TEXT NOT NULL DEFAULT '',
     order_num INTEGER NOT NULL DEFAULT 0
   )`,
@@ -334,6 +336,29 @@ export async function initSchema(): Promise<void> {
         for (const statement of schemaStatements) {
           await client.query(statement);
         }
+
+        // Forward-compatible schema upgrades for databases created before
+        // the dynamic department-head relationship was introduced.
+        await client.query(
+          `ALTER TABLE departments ADD COLUMN IF NOT EXISTS "headFacultyId" TEXT`
+        );
+
+        await client.query(
+          `CREATE INDEX IF NOT EXISTS idx_departments_head_faculty
+           ON departments ("headFacultyId")`
+        );
+
+        // Migrate legacy manually-entered HOD names when they match an
+        // existing faculty member in the same department.
+        await client.query(
+          `UPDATE departments d
+           SET "headFacultyId" = f.id
+           FROM faculty_members f
+           WHERE d."headFacultyId" IS NULL
+             AND TRIM(d."headName") <> ''
+             AND f.name = d."headName"
+             AND f."departmentId" = d.id`
+        );
 
         await client.query("COMMIT");
       } catch (error) {

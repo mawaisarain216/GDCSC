@@ -1,5 +1,6 @@
 import { getDocuments } from "@/lib/repo";
-import { AdminCard, AdminPageHeader, DeleteButton, fileInputClass, inputClass, labelClass, SubmitButton } from "@/components/admin/ui";
+import { AdminCard, AdminPageHeader, DeleteButton, inputClass, labelClass, SubmitButton } from "@/components/admin/ui";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import { createDocumentAction, deleteDocumentAction } from "../../actions";
 import { formatDate } from "@/lib/format";
 import { CheckCircle2, FileText, XCircle } from "lucide-react";
@@ -37,9 +38,16 @@ export default async function DocumentsAdminPage({ searchParams }: { searchParam
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-          <div>
-            <label className={labelClass}>File (PDF)</label>
-            <input type="file" name="file" accept="application/pdf" required className={fileInputClass} />
+          <div className="sm:col-span-4">
+            <ImageUploadField
+              name="fileUrl"
+              folder="documents"
+              label="File (PDF)"
+              accept="application/pdf"
+              kind="file"
+              required
+              description="PDF only · maximum 5 MB."
+            />
           </div>
           <div className="sm:col-span-4">
             <SubmitButton>Upload</SubmitButton>

@@ -1,7 +1,6 @@
-import { AdminCard, fileInputClass, inputClass, labelClass, SubmitButton, ToggleField } from "@/components/admin/ui";
+import { AdminCard, inputClass, labelClass, SubmitButton, ToggleField } from "@/components/admin/ui";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import type { Notice } from "@/lib/types";
-
-const CATEGORIES = ["General", "Admission", "Exam", "Result", "Academic"];
 
 export default function NoticeForm({
   notice,
@@ -19,31 +18,36 @@ export default function NoticeForm({
           <label className={labelClass}>Title</label>
           <input name="title" required defaultValue={notice?.title} className={inputClass} />
         </div>
-        <div className="grid sm:grid-cols-3 gap-5">
+
+        <div className="grid sm:grid-cols-2 gap-5">
           <div>
             <label className={labelClass}>Category</label>
-            <select name="category" defaultValue={notice?.category || "General"} className={inputClass}>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <input name="category" defaultValue={notice?.category || "General"} className={inputClass} />
           </div>
           <div>
             <label className={labelClass}>Published Date</label>
             <input type="date" name="publishedAt" defaultValue={publishedAt} className={inputClass} />
           </div>
-          <div className="flex items-end pb-2.5">
-            <ToggleField name="isPinned" label="Pin to top" defaultChecked={notice?.isPinned === 1} />
-          </div>
         </div>
+
         <div>
-          <label className={labelClass}>Details (optional)</label>
-          <textarea name="body" defaultValue={notice?.body} rows={4} className={inputClass} />
+          <label className={labelClass}>Body</label>
+          <textarea name="body" defaultValue={notice?.body} rows={6} className={inputClass} placeholder="Supports basic HTML, e.g. <p>...</p>" />
         </div>
-        <div>
-          <label className={labelClass}>Attachment (PDF)</label>
-          <input type="file" name="file" accept="application/pdf,image/*" className={fileInputClass} />
-          {notice?.fileUrl && <p className="text-xs text-gray-400 mt-1">Current: {notice.fileUrl}</p>}
-        </div>
+
+        <ToggleField name="isPinned" label="Pin to top" defaultChecked={notice?.isPinned === 1} />
+
+        <ImageUploadField
+          name="fileUrl"
+          folder="notices"
+          currentUrl={notice?.fileUrl}
+          label="Attachment"
+          accept="application/pdf,image/jpeg,image/png,image/webp,image/gif"
+          kind="file"
+          description="Optional PDF or image attachment."
+        />
       </AdminCard>
+
       <SubmitButton>{notice ? "Update Notice" : "Publish Notice"}</SubmitButton>
     </form>
   );

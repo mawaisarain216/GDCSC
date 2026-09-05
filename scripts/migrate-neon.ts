@@ -43,6 +43,18 @@ async function main() {
     console.log(`✔ ${name}: ${rows.length} rows`);
   }
 
+  // Link legacy department HOD names to the real faculty records after all
+  // faculty and department rows have been imported.
+  await db.prepare(
+    `UPDATE departments d
+     SET headFacultyId = f.id
+     FROM faculty_members f
+     WHERE d.headFacultyId IS NULL
+       AND TRIM(d.headName) <> ''
+       AND f.name = d.headName
+       AND f.departmentId = d.id`
+  ).run();
+
   source.close();
   console.log("\nNeon migration complete.");
 }

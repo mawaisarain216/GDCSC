@@ -1,155 +1,71 @@
 "use client";
 
-import { upload } from "@vercel/blob/client";
 import { useState } from "react";
-import {
-  fileInputClass,
-  inputClass,
-  labelClass,
-  SubmitButton,
-} from "@/components/admin/ui";
 import { createGalleryImageAction } from "../../actions";
+import ImageUploadField from "@/components/admin/ImageUploadField";
+import { inputClass, labelClass } from "@/components/admin/ui";
 import { Loader2, XCircle } from "lucide-react";
 
 export default function GalleryUploadForm() {
-  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>
-  ) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (uploading) return;
+    if (saving) return;
 
     setError("");
-
-    const form = event.currentTarget;
-    const fileInput = form.elements.namedItem(
-      "image"
-    ) as HTMLInputElement | null;
-
-    const file = fileInput?.files?.[0];
-
-    if (!file) {
-      setError("Please choose an image file.");
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      setError("Please choose a valid image file.");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Image must be 5MB or smaller.");
-      return;
-    }
-
-    setUploading(true);
+    setSaving(true);
 
     try {
-      const blob = await upload(
-        `gallery/${Date.now()}-${file.name}`,
-        file,
-        {
-          access: "public",
-          handleUploadUrl: "/api/blob-upload",
-        }
-      );
-
-      const formData = new FormData();
-
-      formData.append("url", blob.url);
-
-      const categoryInput = form.elements.namedItem(
-        "category"
-      ) as HTMLInputElement | null;
-
-      const captionInput = form.elements.namedItem(
-        "caption"
-      ) as HTMLInputElement | null;
-
-      formData.append(
-        "category",
-        categoryInput?.value || "Campus"
-      );
-
-      formData.append(
-        "caption",
-        captionInput?.value || ""
-      );
-
+      const form = event.currentTarget;
+      const formData = new FormData(form);
       const result = await createGalleryImageAction(formData);
 
       if (!result?.success) {
-        throw new Error(
-          result?.error || "Failed to save image."
-        );
+        throw new Error(result?.error || "Failed to save image.");
       }
 
-      window.location.href =
-        "/admin/media/gallery?saved=1";
+      window.location.href = "/admin/media/gallery?saved=1";
     } catch (err) {
-      console.error("Gallery upload failed:", err);
-      setError("Upload failed. Please try again.");
-      setUploading(false);
+      console.error("Gallery save failed:", err);
+      setError(err instanceof Error ? err.message : "Upload failed. Please try again.");
+      setSaving(false);
     }
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="grid sm:grid-cols-4 gap-4 items-end"
-    >
-      <div className="sm:col-span-2">
-        <label className={labelClass}>Image File</label>
-
-        <input
-          type="file"
-          name="image"
-          accept="image/*"
+    <form onSubmit={handleSubmit} className="grid sm:grid-cols-4 gap-4 items-end">
+      <div className="sm:col-span-4">
+        <ImageUploadField
+          name="url"
+          folder="gallery"
+          label="Image File"
           required
-          disabled={uploading}
-          className={fileInputClass}
+          description="Recommended square image: 800 × 800 px."
         />
       </div>
 
       <div>
         <label className={labelClass}>Category</label>
-
-        <input
-          name="category"
-          defaultValue="Campus"
-          disabled={uploading}
-          className={inputClass}
-        />
+        <input name="category" defaultValue="Campus" disabled={saving} className={inputClass} />
       </div>
 
-      <div>
+      <div className="sm:col-span-2">
         <label className={labelClass}>Caption</label>
-
-        <input
-          name="caption"
-          disabled={uploading}
-          className={inputClass}
-        />
+        <input name="caption" disabled={saving} className={inputClass} />
       </div>
 
       <div className="sm:col-span-4">
-        <SubmitButton>
-          {uploading ? (
-            <span className="flex items-center justify-center gap-2">
-              <Loader2
-                size={16}
-                className="animate-spin"
-              />
-              Uploading...
-            </span>
-          ) : (
-            "Upload"
-          )}
-        </SubmitButton>
+        <button
+          type="submit"
+          disabled={saving}
+          className="inline-flex items-center gap-2 bg-[#0B5D46] text-white font-medium text-sm px-4 py-2.5 rounded-lg hover:opacity-90 disabled:opacity-60"
+        >
+          {saving && <Loader2 size={15} className="animate-spin" />}
+          {saving ? "Saving..." : "Upload"}
+        </button>
       </div>
 
       {error && (

@@ -3,6 +3,9 @@ import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import NotFoundContent from "@/components/site/NotFoundContent";
 
+// The global 404 renders database-backed site components through the root layout.
+export const dynamic = "force-dynamic";
+
 // This root-level not-found.tsx handles fully unmatched URLs (paths that
 // don't fall under any known route at all). Because it lives outside the
 // (site) route group, it isn't automatically wrapped by that group's

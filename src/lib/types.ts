@@ -131,6 +131,7 @@ export interface Department {
   slug: string;
   description: string;
   headName: string;
+  headFacultyId: string | null;
   imageUrl: string;
   order_num: number;
 }

@@ -2,7 +2,6 @@
 
 import { redirect } from "next/navigation";
 import { createAdmissionApplication, getAdmissionFormFields, getOpenAdmissionPrograms } from "@/lib/repo";
-import { saveUploadedFile } from "@/lib/upload";
 import { nowIso } from "@/lib/db";
 import { checkFormRateLimit, getClientIp, recordFormAttempt } from "@/lib/auth";
 
@@ -43,8 +42,24 @@ export async function submitApplication(formData: FormData) {
     data[field.fieldKey] = typeof value === "string" ? value : "";
   }
 
-  const photoFile = formData.get("photo") as File | null;
-  const photoUrl = (await saveUploadedFile(photoFile, "admissions/photos")) || "";
+  const photoUrl = (formData.get("photoUrl") as string | null)?.trim() || "";
+
+  if (!photoUrl) {
+    redirect("/admissions/apply");
+  }
+
+  if (photoUrl) {
+    try {
+      const photo = new URL(photoUrl);
+      const isPublicBlob = photo.protocol === "https:" &&
+        photo.hostname.endsWith(".public.blob.vercel-storage.com");
+      if (!isPublicBlob) {
+        redirect("/admissions/apply");
+      }
+    } catch {
+      redirect("/admissions/apply");
+    }
+  }
 
   const programChoice = (formData.get("programChoice") as string) || data["faculty"] || "";
 

@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { nowIso } from "@/lib/db";
-import { saveUploadedFile } from "@/lib/upload";
 import { slugify } from "@/lib/format";
 import * as repo from "@/lib/repo";
 import {
@@ -64,14 +63,8 @@ export async function saveSettings(formData: FormData) {
 
   const current = await repo.getSettings();
 
-  const logoFile = formData.get("logoFile") as File | null;
-  const faviconFile = formData.get("faviconFile") as File | null;
-
-  const logoUrl =
-    (await saveUploadedFile(logoFile, "branding")) || current.logoUrl;
-
-  const faviconUrl =
-    (await saveUploadedFile(faviconFile, "branding")) || current.faviconUrl;
+  const logoUrl = str(formData, "logoUrl", current.logoUrl);
+  const faviconUrl = str(formData, "faviconUrl", current.faviconUrl);
 
   await repo.updateSettings({
     siteName: str(formData, "siteName", current.siteName),
@@ -327,10 +320,7 @@ export async function deleteMenuItemAction(formData: FormData) {
 export async function createNoticeAction(formData: FormData) {
   await requireAdminSession();
 
-  const file = formData.get("file") as File | null;
-
-  const fileUrl =
-    (await saveUploadedFile(file, "notices")) || "";
+  const fileUrl = str(formData, "fileUrl");
 
   await repo.createNotice({
     title: str(formData, "title"),
@@ -351,15 +341,13 @@ export async function updateNoticeAction(
 ) {
   await requireAdminSession();
 
-  const file = formData.get("file") as File | null;
-
-  const uploaded = await saveUploadedFile(file, "notices");
+  const fileUrl = str(formData, "fileUrl");
 
   await repo.updateNotice(id, {
     title: str(formData, "title"),
     body: str(formData, "body"),
     category: str(formData, "category"),
-    ...(uploaded ? { fileUrl: uploaded } : {}),
+    ...(fileUrl ? { fileUrl } : {}),
     isPinned: bool(formData, "isPinned"),
     publishedAt: str(formData, "publishedAt") || nowIso(),
   });
@@ -381,10 +369,7 @@ export async function deleteNoticeAction(formData: FormData) {
 export async function createNewsEventAction(formData: FormData) {
   await requireAdminSession();
 
-  const file = formData.get("coverImage") as File | null;
-
-  const coverImageUrl =
-    (await saveUploadedFile(file, "news")) || "";
+  const coverImageUrl = str(formData, "coverImageUrl");
 
   const title = str(formData, "title");
 
@@ -411,15 +396,13 @@ export async function updateNewsEventAction(
 ) {
   await requireAdminSession();
 
-  const file = formData.get("coverImage") as File | null;
-
-  const uploaded = await saveUploadedFile(file, "news");
+  const coverImageUrl = str(formData, "coverImageUrl");
 
   await repo.updateNewsEvent(id, {
     title: str(formData, "title"),
     type: str(formData, "type") as "NEWS" | "EVENT",
     body: str(formData, "body"),
-    ...(uploaded ? { coverImageUrl: uploaded } : {}),
+    ...(coverImageUrl ? { coverImageUrl } : {}),
     eventDate: str(formData, "eventDate") || null,
     publishedAt: str(formData, "publishedAt") || nowIso(),
   });
@@ -441,10 +424,11 @@ export async function deleteNewsEventAction(formData: FormData) {
 export async function createSlideAction(formData: FormData) {
   await requireAdminSession();
 
-  const file = formData.get("image") as File | null;
+  const imageUrl = str(formData, "imageUrl");
 
-  const imageUrl =
-    (await saveUploadedFile(file, "slides")) || "";
+  if (!imageUrl) {
+    redirect("/admin/media/slides/new?error=missing-image");
+  }
 
   await repo.createSlide({
     imageUrl,
@@ -466,9 +450,7 @@ export async function updateSlideAction(
 ) {
   await requireAdminSession();
 
-  const file = formData.get("image") as File | null;
-
-  const uploaded = await saveUploadedFile(file, "slides");
+  const imageUrl = str(formData, "imageUrl");
 
   await repo.updateSlide(id, {
     title: str(formData, "title"),
@@ -477,7 +459,7 @@ export async function updateSlideAction(
     buttonUrl: str(formData, "buttonUrl"),
     order_num: num(formData, "order_num", 0),
     isActive: bool(formData, "isActive"),
-    ...(uploaded ? { imageUrl: uploaded } : {}),
+    ...(imageUrl ? { imageUrl } : {}),
   });
 
   revalidateSite();
@@ -541,10 +523,7 @@ export async function deleteGalleryImageAction(formData: FormData) {
 export async function createDocumentAction(formData: FormData) {
   await requireAdminSession();
 
-  const file = formData.get("file") as File | null;
-
-  const fileUrl =
-    (await saveUploadedFile(file, "documents")) || "";
+  const fileUrl = str(formData, "fileUrl");
 
   if (!fileUrl) {
     redirect("/admin/media/documents?error=1");
@@ -575,18 +554,15 @@ export async function deleteDocumentAction(formData: FormData) {
 export async function createDepartmentAction(formData: FormData) {
   await requireAdminSession();
 
-  const file = formData.get("image") as File | null;
-
-  const imageUrl =
-    (await saveUploadedFile(file, "departments")) || "";
-
+  const imageUrl = str(formData, "imageUrl");
   const name = str(formData, "name");
 
   await repo.createDepartment({
     name,
     slug: slugify(str(formData, "slug") || name),
     description: str(formData, "description"),
-    headName: str(formData, "headName"),
+    headName: "",
+    headFacultyId: null,
     imageUrl,
     order_num: num(formData, "order_num", 0),
   });
@@ -602,17 +578,16 @@ export async function updateDepartmentAction(
 ) {
   await requireAdminSession();
 
-  const file = formData.get("image") as File | null;
-
-  const uploaded = await saveUploadedFile(file, "departments");
+  const imageUrl = str(formData, "imageUrl");
+  const headFacultyId = str(formData, "headFacultyId") || null;
 
   await repo.updateDepartment(id, {
     name: str(formData, "name"),
     slug: slugify(str(formData, "slug")),
     description: str(formData, "description"),
-    headName: str(formData, "headName"),
+    headFacultyId,
     order_num: num(formData, "order_num", 0),
-    ...(uploaded ? { imageUrl: uploaded } : {}),
+    ...(imageUrl ? { imageUrl } : {}),
   });
 
   revalidateSite();
@@ -686,20 +661,27 @@ export async function deleteProgramAction(formData: FormData) {
 export async function createFacultyAction(formData: FormData) {
   await requireAdminSession();
 
-  const file = formData.get("photo") as File | null;
+  const photoUrl = str(formData, "photoUrl");
+  const departmentId = str(formData, "departmentId") || null;
+  const isHead = bool(formData, "isHeadOfDepartment") === 1;
 
-  const photoUrl =
-    (await saveUploadedFile(file, "faculty")) || "";
+  if (isHead && !departmentId) {
+    throw new Error("Select a department before assigning Head of Department.");
+  }
 
-  await repo.createFaculty({
+  const id = await repo.createFaculty({
     name: str(formData, "name"),
     designation: str(formData, "designation", "Lecturer"),
     qualification: str(formData, "qualification"),
     photoUrl,
     email: str(formData, "email"),
-    departmentId: str(formData, "departmentId") || null,
+    departmentId,
     order_num: num(formData, "order_num", 0),
   });
+
+  if (isHead) {
+    await repo.assignFacultyAsDepartmentHead(id, true);
+  }
 
   revalidateSite();
 
@@ -712,19 +694,21 @@ export async function updateFacultyAction(
 ) {
   await requireAdminSession();
 
-  const file = formData.get("photo") as File | null;
-
-  const uploaded = await saveUploadedFile(file, "faculty");
+  const photoUrl = str(formData, "photoUrl");
+  const departmentId = str(formData, "departmentId") || null;
+  const isHead = bool(formData, "isHeadOfDepartment") === 1;
 
   await repo.updateFaculty(id, {
     name: str(formData, "name"),
     designation: str(formData, "designation"),
     qualification: str(formData, "qualification"),
     email: str(formData, "email"),
-    departmentId: str(formData, "departmentId") || null,
+    departmentId,
     order_num: num(formData, "order_num", 0),
-    ...(uploaded ? { photoUrl: uploaded } : {}),
+    ...(photoUrl ? { photoUrl } : {}),
   });
+
+  await repo.assignFacultyAsDepartmentHead(id, isHead);
 
   revalidateSite();
 

@@ -1,6 +1,6 @@
-import { AdminCard, fileInputClass, inputClass, labelClass, SubmitButton } from "@/components/admin/ui";
+import { AdminCard, inputClass, labelClass, SubmitButton } from "@/components/admin/ui";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import type { NewsEvent } from "@/lib/types";
-import Image from "next/image";
 
 export default function NewsEventForm({
   item,
@@ -19,6 +19,7 @@ export default function NewsEventForm({
           <label className={labelClass}>Title</label>
           <input name="title" required defaultValue={item?.title} className={inputClass} />
         </div>
+
         <div className="grid sm:grid-cols-3 gap-5">
           <div>
             <label className={labelClass}>Type</label>
@@ -36,18 +37,21 @@ export default function NewsEventForm({
             <input type="date" name="eventDate" defaultValue={eventDate} className={inputClass} />
           </div>
         </div>
+
         <div>
           <label className={labelClass}>Content</label>
           <textarea name="body" defaultValue={item?.body} rows={6} className={inputClass} placeholder="Supports basic HTML, e.g. <p>...</p>" />
         </div>
-        <div>
-          <label className={labelClass}>Cover Image</label>
-          <div className="flex items-center gap-3">
-            {item?.coverImageUrl && <Image src={item.coverImageUrl} alt="" width={60} height={40} className="rounded object-cover bg-gray-100" />}
-            <input type="file" name="coverImage" accept="image/*" className={fileInputClass} />
-          </div>
-        </div>
+
+        <ImageUploadField
+          name="coverImageUrl"
+          folder="news"
+          currentUrl={item?.coverImageUrl}
+          label="Cover Image"
+          description="Recommended landscape image."
+        />
       </AdminCard>
+
       <SubmitButton>{item ? "Update Post" : "Publish Post"}</SubmitButton>
     </form>
   );

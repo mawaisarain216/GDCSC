@@ -1,8 +1,8 @@
 import { getSettings } from "@/lib/repo";
-import { AdminCard, AdminPageHeader, fileInputClass, inputClass, labelClass, SubmitButton } from "@/components/admin/ui";
+import { AdminCard, AdminPageHeader, inputClass, labelClass, SubmitButton } from "@/components/admin/ui";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import { saveSettings } from "../actions";
 import { CheckCircle2, ShieldCheck } from "lucide-react";
-import Image from "next/image";
 import { findAdminById, getSession } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import ChangePasswordForm from "@/components/admin/ChangePasswordForm";
@@ -42,17 +42,20 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <label className={labelClass}>Affiliation Text (footer)</label>
               <input name="affiliationText" defaultValue={s.affiliationText} className={inputClass} />
             </div>
-            <div>
-              <label className={labelClass}>Logo</label>
-              <div className="flex items-center gap-3">
-                <Image src={s.logoUrl} alt="Logo" width={40} height={40} className="rounded bg-gray-100" />
-                <input type="file" name="logoFile" accept="image/*" className={fileInputClass} />
-              </div>
-            </div>
-            <div>
-              <label className={labelClass}>Favicon</label>
-              <input type="file" name="faviconFile" accept="image/*" className={fileInputClass} />
-            </div>
+            <ImageUploadField
+              name="logoUrl"
+              folder="branding/logo"
+              currentUrl={s.logoUrl}
+              label="Logo"
+              description="Recommended square logo: 400 × 400 px."
+            />
+            <ImageUploadField
+              name="faviconUrl"
+              folder="branding/favicon"
+              currentUrl={s.faviconUrl}
+              label="Favicon"
+              description="Recommended square PNG: 64 × 64 px or larger."
+            />
           </div>
         </AdminCard>
 

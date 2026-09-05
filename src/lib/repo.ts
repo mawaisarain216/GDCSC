@@ -337,23 +337,115 @@ export async function getDepartmentById(id: string) {
   return await db.prepare("SELECT * FROM departments WHERE id = ?").get(id) as unknown as Department | undefined;
 }
 
+export async function getFacultyByDepartmentId(departmentId: string) {
+  return await db
+    .prepare("SELECT * FROM faculty_members WHERE departmentId = ? ORDER BY order_num ASC, name ASC")
+    .all(departmentId) as unknown as FacultyMember[];
+}
+
 export async function createDepartment(data: Omit<Department, "id">) {
   const id = genId("dept");
   await db.prepare(
-    `INSERT INTO departments (id, name, slug, description, headName, imageUrl, order_num) VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(id, data.name, data.slug, data.description, data.headName, data.imageUrl, data.order_num);
+    `INSERT INTO departments (id, name, slug, description, headName, headFacultyId, imageUrl, order_num) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id,
+    data.name,
+    data.slug,
+    data.description,
+    data.headName || "",
+    data.headFacultyId || null,
+    data.imageUrl,
+    data.order_num
+  );
   return id;
 }
 
 export async function updateDepartment(id: string, data: Partial<Department>) {
   const current = await db.prepare("SELECT * FROM departments WHERE id = ?").get(id) as unknown as Department;
   const d = { ...current, ...data };
+
+  let headName = d.headName || "";
+  if (d.headFacultyId) {
+    const head = await getFacultyById(d.headFacultyId);
+    if (head && head.departmentId === id) {
+      headName = head.name;
+    } else {
+      d.headFacultyId = null;
+      headName = "";
+    }
+  } else {
+    headName = "";
+  }
+
   await db.prepare(
-    `UPDATE departments SET name=?, slug=?, description=?, headName=?, imageUrl=?, order_num=? WHERE id=?`
-  ).run(d.name, d.slug, d.description, d.headName, d.imageUrl, d.order_num, id);
+    `UPDATE departments SET name=?, slug=?, description=?, headName=?, headFacultyId=?, imageUrl=?, order_num=? WHERE id=?`
+  ).run(
+    d.name,
+    d.slug,
+    d.description,
+    headName,
+    d.headFacultyId || null,
+    d.imageUrl,
+    d.order_num,
+    id
+  );
+}
+
+export async function setDepartmentHead(departmentId: string, facultyId: string | null) {
+  if (!facultyId) {
+    await db.prepare(
+      `UPDATE departments SET headFacultyId=NULL, headName='' WHERE id=?`
+    ).run(departmentId);
+    return;
+  }
+
+  const faculty = await getFacultyById(facultyId);
+  if (!faculty || faculty.departmentId !== departmentId) {
+    throw new Error("Selected Head of Department must belong to this department.");
+  }
+
+  // A faculty member can be the HOD of only one department.
+  await db.prepare(
+    `UPDATE departments
+     SET headFacultyId=NULL, headName=''
+     WHERE headFacultyId=? AND id<>?`
+  ).run(faculty.id, departmentId);
+
+  await db.prepare(
+    `UPDATE departments SET headFacultyId=?, headName=? WHERE id=?`
+  ).run(faculty.id, faculty.name, departmentId);
+}
+
+export async function assignFacultyAsDepartmentHead(facultyId: string, isHead: boolean) {
+  const faculty = await getFacultyById(facultyId);
+  if (!faculty) throw new Error("Faculty member not found.");
+
+  if (!isHead) {
+    await db.prepare(
+      `UPDATE departments SET headFacultyId=NULL, headName='' WHERE headFacultyId=?`
+    ).run(facultyId);
+    return;
+  }
+
+  if (!faculty.departmentId) {
+    throw new Error("A faculty member must be assigned to a department before becoming its Head of Department.");
+  }
+
+  // There is exactly one HOD per department. Clear the previous HOD first.
+  await db.prepare(
+    `UPDATE departments
+     SET headFacultyId=NULL, headName=''
+     WHERE id=? AND headFacultyId IS NOT NULL AND headFacultyId<>?`
+  ).run(faculty.departmentId, facultyId);
+
+  await setDepartmentHead(faculty.departmentId, facultyId);
 }
 
 export async function deleteDepartment(id: string) {
+  // Keep existing staff/program records, but remove their broken department
+  // links so the UI never points to a deleted department.
+  await db.prepare("UPDATE faculty_members SET departmentId=NULL WHERE departmentId=?").run(id);
+  await db.prepare("UPDATE programs SET departmentId=NULL WHERE departmentId=?").run(id);
   await db.prepare("DELETE FROM departments WHERE id = ?").run(id);
 }
 
@@ -404,12 +496,24 @@ export async function createFaculty(data: Omit<FacultyMember, "id">) {
 export async function updateFaculty(id: string, data: Partial<FacultyMember>) {
   const current = await db.prepare("SELECT * FROM faculty_members WHERE id = ?").get(id) as unknown as FacultyMember;
   const f = { ...current, ...data };
+
+  // If the faculty member was the HOD and is moved to another department,
+  // remove the old HOD link before saving the new department.
+  if (current.departmentId !== f.departmentId) {
+    await db.prepare(
+      `UPDATE departments SET headFacultyId=NULL, headName='' WHERE headFacultyId=?`
+    ).run(id);
+  }
+
   await db.prepare(
     `UPDATE faculty_members SET name=?, designation=?, qualification=?, photoUrl=?, email=?, departmentId=?, order_num=? WHERE id=?`
   ).run(f.name, f.designation, f.qualification, f.photoUrl, f.email, f.departmentId, f.order_num, id);
+
+  return f;
 }
 
 export async function deleteFaculty(id: string) {
+  await db.prepare("UPDATE departments SET headFacultyId=NULL, headName='' WHERE headFacultyId=?").run(id);
   await db.prepare("DELETE FROM faculty_members WHERE id = ?").run(id);
 }
 

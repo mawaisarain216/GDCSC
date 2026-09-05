@@ -5,6 +5,10 @@ import { getSettings } from "@/lib/repo";
 import { ensureDefaultAdmin } from "@/lib/auth";
 import { SITE_URL } from "@/lib/site";
 
+// The application reads Neon-backed settings during rendering, so pages must render at runtime.
+// This also prevents Next.js from attempting database-dependent admin/site layouts at build time.
+export const dynamic = "force-dynamic";
+
 
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getSettings();
