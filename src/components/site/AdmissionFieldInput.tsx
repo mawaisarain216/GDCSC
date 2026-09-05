@@ -1,4 +1,5 @@
 import type { AdmissionFormField } from "@/lib/types";
+import AdmissionFileUploadField from "./AdmissionFileUploadField";
 
 export default function AdmissionFieldInput({
   field,
@@ -89,18 +90,7 @@ export default function AdmissionFieldInput({
       );
 
     case "file":
-      return (
-        <div>
-          {label}
-          <input
-            type="file"
-            id={field.fieldKey}
-            name={field.fieldKey}
-            required={required}
-            className="text-sm file:mr-3 file:py-2 file:px-3 file:rounded-theme file:border-0 file:bg-primary file:text-white file:text-sm file:font-medium hover:file:opacity-90 cursor-pointer"
-          />
-        </div>
-      );
+      return <AdmissionFileUploadField field={field} />;
 
     default:
       return (

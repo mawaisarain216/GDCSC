@@ -19,6 +19,7 @@ import type {
   Theme,
 } from "@/lib/types";
 import { ADMISSION_STATUS_TRANSITIONS } from "@/lib/admissionWorkflow";
+import { DEFAULT_HEADER_UTILITY_LINKS, DEFAULT_SOCIAL_LINKS } from "@/lib/repo";
 
 function str(fd: FormData, key: string, fallback = "") {
   const v = fd.get(key);
@@ -33,6 +34,44 @@ function num(fd: FormData, key: string, fallback = 0) {
 
 function bool(fd: FormData, key: string) {
   return fd.get(key) ? 1 : 0;
+}
+
+function safeHttpUrl(value: string, fallback = "") {
+  const v = value.trim();
+  if (!v) return fallback;
+  try {
+    const u = new URL(v);
+    return u.protocol === "https:" || u.protocol === "http:" ? u.toString() : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function safeJsonArray(raw: string, fallback: string, max: number, mode: "social" | "utility") {
+  try {
+    const a = JSON.parse(raw);
+    if (!Array.isArray(a)) return fallback;
+    const out = a.slice(0, max).map((x: any, i: number) => mode === "social" ? ({
+      id: String(x?.id || `social-${i + 1}`).slice(0, 80),
+      label: String(x?.label || "Social").trim().slice(0, 50),
+      platform: String(x?.platform || "website").slice(0, 30),
+      url: safeHttpUrl(String(x?.url || "")),
+      enabled: x?.enabled !== false,
+      showInTopBar: x?.showInTopBar === true,
+      showInFooter: x?.showInFooter !== false,
+      order: Number.isFinite(Number(x?.order)) ? Math.max(1, Math.min(999, Number(x.order))) : i + 1,
+    }) : ({
+      id: String(x?.id || `utility-${i + 1}`).slice(0, 80),
+      label: String(x?.label || "Link").trim().slice(0, 50),
+      url: String(x?.url || "").trim().slice(0, 300),
+      enabled: x?.enabled !== false,
+      openInNewTab: x?.openInNewTab === true,
+      order: Number.isFinite(Number(x?.order)) ? Math.max(1, Math.min(999, Number(x.order))) : i + 1,
+    }));
+    return JSON.stringify(out.filter((x: any) => mode === "social" ? x.url : (x.url.startsWith("/") || /^https?:\/\//i.test(x.url))));
+  } catch {
+    return fallback;
+  }
 }
 
 function revalidateSite() {
@@ -65,6 +104,10 @@ export async function saveSettings(formData: FormData) {
 
   const logoUrl = str(formData, "logoUrl", current.logoUrl);
   const faviconUrl = str(formData, "faviconUrl", current.faviconUrl);
+  const socialLinksJson=safeJsonArray(str(formData,"socialLinksJson"),current.socialLinksJson||JSON.stringify(DEFAULT_SOCIAL_LINKS),30,"social");
+  const headerUtilityLinksJson=safeJsonArray(str(formData,"headerUtilityLinksJson"),current.headerUtilityLinksJson||JSON.stringify(DEFAULT_HEADER_UTILITY_LINKS),15,"utility");
+  const topBarSocialLimit=Math.max(0,Math.min(12,Number.parseInt(str(formData,"topBarSocialLimit",String(current.topBarSocialLimit||5)),10)||0));
+  const footerSocialLimit=Math.max(0,Math.min(12,Number.parseInt(str(formData,"footerSocialLimit",String(current.footerSocialLimit||8)),10)||0));
 
   await repo.updateSettings({
     siteName: str(formData, "siteName", current.siteName),
@@ -73,11 +116,12 @@ export async function saveSettings(formData: FormData) {
     phone: str(formData, "phone", current.phone),
     email: str(formData, "email", current.email),
     address: str(formData, "address", current.address),
-    mapEmbedUrl: str(formData, "mapEmbedUrl", current.mapEmbedUrl),
-    facebookUrl: str(formData, "facebookUrl", current.facebookUrl),
-    twitterUrl: str(formData, "twitterUrl", current.twitterUrl),
-    youtubeUrl: str(formData, "youtubeUrl", current.youtubeUrl),
-    instagramUrl: str(formData, "instagramUrl", current.instagramUrl),
+    mapEmbedUrl: safeHttpUrl(str(formData, "mapEmbedUrl", current.mapEmbedUrl), current.mapEmbedUrl),
+    facebookUrl: safeHttpUrl(str(formData, "facebookUrl", current.facebookUrl), current.facebookUrl),
+    twitterUrl: safeHttpUrl(str(formData, "twitterUrl", current.twitterUrl), current.twitterUrl),
+    youtubeUrl: safeHttpUrl(str(formData, "youtubeUrl", current.youtubeUrl), current.youtubeUrl),
+    instagramUrl: safeHttpUrl(str(formData, "instagramUrl", current.instagramUrl), current.instagramUrl),
+    socialLinksJson, headerUtilityLinksJson, topBarSocialLimit, footerSocialLimit,
     metaTitle: str(formData, "metaTitle", current.metaTitle),
     metaDescription: str(formData, "metaDescription", current.metaDescription),
     affiliationText: str(

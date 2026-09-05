@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { getDepartments, getNewsEvents } from "@/lib/repo";
 
+export const dynamic = "force-dynamic";
+
 const STATIC_PATHS = [
   "",
   "/about",

@@ -6,6 +6,8 @@ import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { findAdminById, getSession } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import ChangePasswordForm from "@/components/admin/ChangePasswordForm";
+import SocialLinksEditor from "@/components/admin/SocialLinksEditor";
+import { getHeaderUtilityLinks, getSocialLinks } from "@/lib/repo";
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
   const { saved } = await searchParams;
@@ -82,25 +84,12 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         </AdminCard>
 
         <AdminCard className="p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">Social Media</h2>
-          <div className="grid sm:grid-cols-2 gap-5">
-            <div>
-              <label className={labelClass}>Facebook URL</label>
-              <input name="facebookUrl" defaultValue={s.facebookUrl} className={inputClass} />
-            </div>
-            <div>
-              <label className={labelClass}>YouTube URL</label>
-              <input name="youtubeUrl" defaultValue={s.youtubeUrl} className={inputClass} />
-            </div>
-            <div>
-              <label className={labelClass}>Instagram URL</label>
-              <input name="instagramUrl" defaultValue={s.instagramUrl} className={inputClass} />
-            </div>
-            <div>
-              <label className={labelClass}>Twitter / X URL</label>
-              <input name="twitterUrl" defaultValue={s.twitterUrl} className={inputClass} />
-            </div>
-          </div>
+          <h2 className="font-semibold text-gray-900 mb-4">Social Media & Top Bar</h2>
+          <SocialLinksEditor socialLinks={getSocialLinks(s) as any} utilityLinks={getHeaderUtilityLinks(s) as any} topBarSocialLimit={s.topBarSocialLimit || 5} footerSocialLimit={s.footerSocialLimit || 8} />
+          <input type="hidden" name="facebookUrl" value={s.facebookUrl || ""} />
+          <input type="hidden" name="twitterUrl" value={s.twitterUrl || ""} />
+          <input type="hidden" name="youtubeUrl" value={s.youtubeUrl || ""} />
+          <input type="hidden" name="instagramUrl" value={s.instagramUrl || ""} />
         </AdminCard>
 
         <AdminCard className="p-5">

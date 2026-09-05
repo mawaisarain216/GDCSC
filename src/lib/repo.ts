@@ -23,12 +23,52 @@ import type {
 
 /* ----------------------------- Settings / Theme ----------------------------- */
 
+export const DEFAULT_SOCIAL_LINKS = [
+  {id:"facebook",label:"Facebook",platform:"facebook",url:"",enabled:true,showInTopBar:true,showInFooter:true,order:1},
+  {id:"instagram",label:"Instagram",platform:"instagram",url:"",enabled:true,showInTopBar:false,showInFooter:true,order:2},
+  {id:"youtube",label:"YouTube",platform:"youtube",url:"",enabled:true,showInTopBar:false,showInFooter:true,order:3},
+  {id:"x",label:"X",platform:"x",url:"",enabled:true,showInTopBar:false,showInFooter:true,order:4},
+  {id:"tiktok",label:"TikTok",platform:"tiktok",url:"",enabled:true,showInTopBar:false,showInFooter:true,order:5},
+  {id:"linkedin",label:"LinkedIn",platform:"linkedin",url:"",enabled:true,showInTopBar:false,showInFooter:true,order:6},
+  {id:"whatsapp",label:"WhatsApp",platform:"whatsapp",url:"",enabled:true,showInTopBar:false,showInFooter:true,order:7},
+  {id:"telegram",label:"Telegram",platform:"telegram",url:"",enabled:true,showInTopBar:false,showInFooter:true,order:8},
+  {id:"threads",label:"Threads",platform:"threads",url:"",enabled:true,showInTopBar:false,showInFooter:true,order:9},
+  {id:"snapchat",label:"Snapchat",platform:"snapchat",url:"",enabled:true,showInTopBar:false,showInFooter:true,order:10},
+  {id:"pinterest",label:"Pinterest",platform:"pinterest",url:"",enabled:true,showInTopBar:false,showInFooter:true,order:11},
+  {id:"website",label:"Website",platform:"website",url:"",enabled:true,showInTopBar:false,showInFooter:true,order:12},
+];
+export const DEFAULT_HEADER_UTILITY_LINKS = [
+  {id:"admissions",label:"Admissions",url:"/admissions",enabled:true,openInNewTab:false,order:1},
+  {id:"status",label:"Check Status",url:"/admissions/status",enabled:true,openInNewTab:false,order:2},
+  {id:"notices",label:"Notices",url:"/notices",enabled:true,openInNewTab:false,order:3},
+];
+function safeExternalUrl(value: string) {
+  try { const u = new URL(value); return u.protocol === "https:" || u.protocol === "http:" ? u.toString() : ""; } catch { return ""; }
+}
+export function getSocialLinks(settings: Settings) {
+  let links: any[] = [];
+  try { const v=JSON.parse(settings.socialLinksJson||"[]"); if (Array.isArray(v)) links=v; } catch {}
+  if (!links.length) links = DEFAULT_SOCIAL_LINKS.map((item) => ({ ...item, url:
+    item.platform === "facebook" ? settings.facebookUrl : item.platform === "instagram" ? settings.instagramUrl :
+    item.platform === "youtube" ? settings.youtubeUrl : item.platform === "x" ? settings.twitterUrl : ""
+  }));
+  return links.filter((x) => x && x.enabled !== false).map((x) => ({ ...x, url: safeExternalUrl(String(x.url || "")) })).filter((x) => x.url);
+}
+export function getHeaderUtilityLinks(settings: Settings) {
+  try {
+    const v=JSON.parse(settings.headerUtilityLinksJson||"[]");
+    const links=Array.isArray(v)&&v.length?v:DEFAULT_HEADER_UTILITY_LINKS;
+    return links.filter((x:any)=>x && x.enabled !== false && (String(x.url||"").startsWith("/") || safeExternalUrl(String(x.url||""))));
+  } catch { return DEFAULT_HEADER_UTILITY_LINKS; }
+}
+
+
 export async function getSettings() {
   let row = await db.prepare("SELECT * FROM settings WHERE id = 1").get() as unknown as Settings | undefined;
   if (!row) {
     await db.prepare(
-      `INSERT INTO settings (id, themeJson, homepageSectionsJson, updatedAt) VALUES (1, ?, ?, ?)`
-    ).run(JSON.stringify(DEFAULT_THEME), JSON.stringify(DEFAULT_HOMEPAGE_SECTIONS), nowIso());
+      `INSERT INTO settings (id, themeJson, homepageSectionsJson, socialLinksJson, headerUtilityLinksJson, topBarSocialLimit, footerSocialLimit, updatedAt) VALUES (1, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(JSON.stringify(DEFAULT_THEME), JSON.stringify(DEFAULT_HOMEPAGE_SECTIONS), JSON.stringify(DEFAULT_SOCIAL_LINKS), JSON.stringify(DEFAULT_HEADER_UTILITY_LINKS), 5, 8, nowIso());
     row = await db.prepare("SELECT * FROM settings WHERE id = 1").get() as unknown as Settings;
   }
   return row;
@@ -58,7 +98,7 @@ export async function updateSettings(patch: Partial<Settings>) {
   const current = await getSettings();
   const merged = { ...current, ...patch };
   await db.prepare(
-    `UPDATE settings SET siteName=?, shortName=?, tagline=?, logoUrl=?, faviconUrl=?, phone=?, email=?, address=?, mapEmbedUrl=?, facebookUrl=?, twitterUrl=?, youtubeUrl=?, instagramUrl=?, metaTitle=?, metaDescription=?, affiliationText=?, themeJson=?, homepageSectionsJson=?, customCss=?, updatedAt=? WHERE id=1`
+    `UPDATE settings SET siteName=?, shortName=?, tagline=?, logoUrl=?, faviconUrl=?, phone=?, email=?, address=?, mapEmbedUrl=?, facebookUrl=?, twitterUrl=?, youtubeUrl=?, instagramUrl=?, socialLinksJson=?, headerUtilityLinksJson=?, topBarSocialLimit=?, footerSocialLimit=?, metaTitle=?, metaDescription=?, affiliationText=?, themeJson=?, homepageSectionsJson=?, customCss=?, updatedAt=? WHERE id=1`
   ).run(
     merged.siteName,
     merged.shortName,
@@ -73,6 +113,10 @@ export async function updateSettings(patch: Partial<Settings>) {
     merged.twitterUrl,
     merged.youtubeUrl,
     merged.instagramUrl,
+    merged.socialLinksJson,
+    merged.headerUtilityLinksJson,
+    merged.topBarSocialLimit,
+    merged.footerSocialLimit,
     merged.metaTitle,
     merged.metaDescription,
     merged.affiliationText,

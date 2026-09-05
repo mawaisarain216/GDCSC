@@ -1,3 +1,4 @@
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -49,7 +50,7 @@ export default async function NewsEventDetailPage({ params }: { params: Promise<
               <Image src={item.coverImageUrl} alt={item.title} fill className="object-cover" />
             </div>
           )}
-          <div className="prose-content text-text" dangerouslySetInnerHTML={{ __html: item.body }} />
+          <div className="prose-content text-text" dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.body) }} />
         </div>
       </section>
     </>

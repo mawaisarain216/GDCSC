@@ -1,3 +1,4 @@
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Quote } from "lucide-react";
@@ -31,7 +32,7 @@ export default async function PrincipalMessagePage() {
           </div>
           <div>
             <Quote className="text-accent mb-3" size={36} />
-            <div className="prose-content text-text text-lg" dangerouslySetInnerHTML={{ __html: message }} />
+            <div className="prose-content text-text text-lg" dangerouslySetInnerHTML={{ __html: sanitizeHtml(message) }} />
           </div>
         </div>
       </section>

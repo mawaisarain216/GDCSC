@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { getMenu, getSettings } from "@/lib/repo";
+import { getMenu, getSettings, getSocialLinks } from "@/lib/repo";
 import { Mail, MapPin, Phone } from "lucide-react";
-import { FacebookIcon, InstagramIcon, YoutubeIcon } from "./SocialIcons";
+import SocialIcons from "./SocialIcons";
 
 export default async function Footer() {
   const settings = await getSettings();
   const footerLinks = await getMenu("FOOTER");
   const year = new Date().getFullYear();
+  const socialLinks = getSocialLinks(settings).filter((x: any) => x.enabled && x.url && x.showInFooter).sort((a: any,b: any)=>a.order-b.order).slice(0, Math.max(0, settings.footerSocialLimit || 0));
 
   return (
     <footer className="bg-footer-bg text-footer-text mt-auto border-t-[3px] border-accent">
@@ -14,22 +15,12 @@ export default async function Footer() {
         <div>
           <h3 className="font-heading text-lg font-bold text-white mb-3">{settings.siteName}</h3>
           <p className="text-sm text-footer-text/80 leading-relaxed">{settings.affiliationText}</p>
-          <div className="flex items-center gap-3 mt-4">
-            {settings.facebookUrl && (
-              <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent hover:text-[#2b2205] transition-colors">
-                <FacebookIcon size={16} />
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            {socialLinks.map((item: any) => (
+              <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" aria-label={item.label} title={item.label} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent hover:text-[#2b2205] transition-colors">
+                <SocialIcons platform={item.platform} size={16} />
               </a>
-            )}
-            {settings.youtubeUrl && (
-              <a href={settings.youtubeUrl} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent hover:text-[#2b2205] transition-colors">
-                <YoutubeIcon size={16} />
-              </a>
-            )}
-            {settings.instagramUrl && (
-              <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent hover:text-[#2b2205] transition-colors">
-                <InstagramIcon size={16} />
-              </a>
-            )}
+            ))}
           </div>
         </div>
 

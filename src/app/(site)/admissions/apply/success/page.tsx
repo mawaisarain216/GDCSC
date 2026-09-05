@@ -1,13 +1,14 @@
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Printer } from "lucide-react";
 import PageHero from "@/components/site/PageHero";
 
 export default async function ApplySuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ref?: string }>;
+  searchParams: Promise<{ ref?: string; print?: string }>;
 }) {
-  const { ref } = await searchParams;
+  const { ref, print } = await searchParams;
+  const printToken = ref && print ? print : "";
 
   return (
     <>
@@ -28,6 +29,11 @@ export default async function ApplySuccessPage({
             </div>
           )}
           <div className="flex flex-wrap justify-center gap-3">
+            {ref && printToken && (
+              <Link href={`/admissions/print?ref=${encodeURIComponent(ref)}&token=${encodeURIComponent(printToken)}`} className="btn btn-outline gap-2">
+                <Printer size={16} /> Print Submitted Form
+              </Link>
+            )}
             <Link href="/admissions/status" className="btn btn-solid">
               Check Application Status
             </Link>

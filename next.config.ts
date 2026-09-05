@@ -18,7 +18,10 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   turbopack: { root: __dirname },
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "**" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "**.public.blob.vercel-storage.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+    ],
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
   },

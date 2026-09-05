@@ -4,7 +4,8 @@ import { jwtVerify } from "jose";
 const SESSION_COOKIE = "gdc_admin_session";
 
 function secretKey() {
-  const secret = process.env.JWT_SECRET || "dev-only-insecure-secret-change-me";
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET is required for admin authentication.");
   return new TextEncoder().encode(secret);
 }
 

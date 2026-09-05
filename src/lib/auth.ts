@@ -6,7 +6,8 @@ import { db, genId, nowIso } from "./db";
 export const SESSION_COOKIE = "gdc_admin_session";
 
 function secretKey() {
-  const secret = process.env.JWT_SECRET || "dev-only-insecure-secret-change-me";
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET is required for admin authentication.");
   return new TextEncoder().encode(secret);
 }
 
@@ -142,7 +143,7 @@ export async function createSessionToken(user: AdminUserRow) {
   return new SignJWT({ sub: user.id, email: user.email, name: user.name, role: user.role })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("7d")
+    .setExpirationTime("10m")
     .sign(secretKey());
 }
 

@@ -125,3 +125,7 @@ npm run migrate:neon
 5. Deploy the GitHub repository to Vercel. The production app reads/writes Neon instead of the local SQLite file.
 
 Do not commit `.env` or real credentials to GitHub. Use `.env.example` only as a template.
+
+
+## Admission document security
+Admission photos and documents use a separate private Vercel Blob store. Configure `ADMISSION_BLOB_READ_WRITE_TOKEN` locally and in Vercel; keep the existing public `BLOB_READ_WRITE_TOKEN` for public website media. Private admission files are streamed only through authenticated admin routes or a short-lived, CNIC-bound submitted-form token.

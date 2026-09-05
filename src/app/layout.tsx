@@ -63,7 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             educational institution — improves how the site appears in results. */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
         />
       </head>
       <body className="min-h-full flex flex-col bg-bg text-text font-body">

@@ -2,6 +2,7 @@
 
 import { getAdmissionApplicationByNo } from "@/lib/repo";
 import { checkFormRateLimit, getClientIp, recordFormAttempt } from "@/lib/auth";
+import { createAdmissionPrintToken } from "@/lib/admissionPrint";
 
 function normalizeId(value: string): string {
   return value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
@@ -20,8 +21,8 @@ export async function checkStatus(_prevState: unknown, formData: FormData) {
     return { error: `Too many lookups from this connection. Please try again in about ${minutesRemaining} minute(s).` };
   }
 
-  const applicationNo = ((formData.get("applicationNo") as string) || "").trim();
-  const cnic = ((formData.get("cnic") as string) || "").trim();
+  const applicationNo = ((formData.get("applicationNo") as string) || "").trim().slice(0, 40);
+  const cnic = ((formData.get("cnic") as string) || "").trim().slice(0, 40);
 
   if (!applicationNo || !cnic) {
     await recordFormAttempt("admission-status", ip);
@@ -49,6 +50,8 @@ export async function checkStatus(_prevState: unknown, formData: FormData) {
     return { error: "No matching application found. Please double-check your application number and CNIC / B-Form number." };
   }
 
+  await recordFormAttempt("admission-status", ip);
+
   let fullName = "";
   let fatherName = "";
   try {
@@ -58,6 +61,8 @@ export async function checkStatus(_prevState: unknown, formData: FormData) {
   } catch {
     /* ignore */
   }
+
+  const photoAccessToken = await createAdmissionPrintToken(application.applicationNo, storedCnic);
 
   return {
     result: {
@@ -69,6 +74,7 @@ export async function checkStatus(_prevState: unknown, formData: FormData) {
       photoUrl: application.photoUrl,
       fullName,
       fatherName,
+      photoAccessToken,
     },
   };
 }

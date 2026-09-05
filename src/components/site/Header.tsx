@@ -8,12 +8,14 @@ import {
   getNotices,
   getNewsEvents,
   isAdmissionOpen,
+  getSocialLinks,
+  getHeaderUtilityLinks,
 } from "@/lib/repo";
 import { buildMenuTree } from "@/lib/menuTree";
 import Link from "next/link";
 import Image from "next/image";
 import { Mail, MapPin, Phone } from "lucide-react";
-import { FacebookIcon } from "./SocialIcons";
+import SocialIcons from "./SocialIcons";
 import HeaderNav from "./HeaderNav";
 import type { SearchItem } from "./SiteSearch";
 
@@ -51,6 +53,8 @@ export default async function Header() {
   const tree = buildMenuTree(items);
   const admissionOpen = await isAdmissionOpen();
   const searchIndex = await buildSearchIndex();
+  const socialLinks = getSocialLinks(settings).filter((x: any) => x.enabled && x.url && x.showInTopBar).sort((a: any,b: any)=>a.order-b.order).slice(0, Math.max(0, settings.topBarSocialLimit || 0));
+  const utilityLinks = getHeaderUtilityLinks(settings).filter((x: any) => x.enabled).sort((a: any,b: any)=>a.order-b.order);
 
   return (
     <header className={theme.stickyHeader ? "sticky top-0 z-50" : ""}>
@@ -70,27 +74,24 @@ export default async function Header() {
               )}
             </div>
             <div className="flex items-center gap-4">
-              <Link href="/admissions" className="hover:underline inline-flex items-center gap-1.5">
-                {admissionOpen && <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />}
-                {admissionOpen ? "Admissions Open" : "Admissions"}
-              </Link>
-              <Link href="/admissions/status" className="hover:underline">
-                Check Status
-              </Link>
-              <Link href="/notices" className="hover:underline">
-                Notices
-              </Link>
-              {settings.facebookUrl && (
-                <a
-                  href={settings.facebookUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Facebook"
-                  className="hover:text-accent transition-colors"
-                >
-                  <FacebookIcon size={14} />
+              {utilityLinks.map((item: any) => (
+                item.openInNewTab ? (
+                  <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="hover:underline inline-flex items-center gap-1.5">
+                    {item.id === "admissions" && admissionOpen && <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />}
+                    {item.id === "admissions" && admissionOpen ? `${item.label} Open` : item.label}
+                  </a>
+                ) : (
+                  <Link key={item.id} href={item.url} className="hover:underline inline-flex items-center gap-1.5">
+                    {item.id === "admissions" && admissionOpen && <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />}
+                    {item.id === "admissions" && admissionOpen ? `${item.label} Open` : item.label}
+                  </Link>
+                )
+              ))}
+              {socialLinks.map((item: any) => (
+                <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" aria-label={item.label} className="hover:text-accent transition-colors">
+                  <SocialIcons platform={item.platform} size={14} />
                 </a>
-              )}
+              ))}
             </div>
           </div>
         </div>

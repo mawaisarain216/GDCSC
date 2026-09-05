@@ -57,7 +57,7 @@ export async function login(_prevState: unknown, formData: FormData) {
     sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: 60 * 10,
   });
 
   redirect("/admin");

@@ -5,7 +5,7 @@ import { AdminCard, AdminPageHeader } from "@/components/admin/ui";
 import { ADMISSION_STATUS_TRANSITIONS } from "@/lib/admissionWorkflow";
 import ApplicationStatusPanel from "@/components/admin/ApplicationStatusPanel";
 import { formatDate } from "@/lib/format";
-import { UserRound, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { UserRound, AlertTriangle, CheckCircle2, ExternalLink, FileText } from "lucide-react";
 
 const SECTION_LABELS: Record<string, string> = {
   FACULTY: "Choice of Faculty",
@@ -82,12 +82,37 @@ export default async function ApplicationDetailPage({
           <AdminCard className="p-5 text-center">
             <div className="w-28 h-36 rounded-lg bg-gray-100 mx-auto relative overflow-hidden flex items-center justify-center mb-3">
               {application.photoUrl ? (
-                <Image src={application.photoUrl} alt="Applicant" fill className="object-cover" />
+                <Image src={application.photoUrl.includes(".private.blob.vercel-storage.com") ? `/api/admission-file?url=${encodeURIComponent(application.photoUrl)}` : application.photoUrl} alt="Applicant" fill className="object-cover" />
               ) : (
                 <UserRound className="text-gray-300" size={32} />
               )}
             </div>
             <p className="text-xs text-gray-400">Applicant Photo</p>
+          </AdminCard>
+
+          <AdminCard className="p-5">
+            <h2 className="font-semibold text-gray-900 mb-3 text-sm">Uploaded Documents</h2>
+            {fields.filter((f) => f.section === "DOCUMENTS" && f.fieldType === "file").length === 0 ? (
+              <p className="text-xs text-gray-500">No additional document upload fields are configured.</p>
+            ) : (
+              <div className="space-y-3">
+                {fields.filter((f) => f.section === "DOCUMENTS" && f.fieldType === "file").map((f) => {
+                  const url = data[f.fieldKey] || "";
+                  const pdf = url.toLowerCase().split("?")[0].endsWith(".pdf");
+                  return (
+                    <div key={f.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                      <p className="text-xs font-semibold text-gray-700 mb-2">{f.label}</p>
+                      {url ? (
+                        <a href={url.includes(".private.blob.vercel-storage.com") ? `/api/admission-file?url=${encodeURIComponent(url)}` : url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs font-medium text-[#0B5D46] hover:underline">
+                          {pdf ? <FileText size={15} /> : <ExternalLink size={15} />}
+                          {pdf ? "Open PDF" : "Open Image"}
+                        </a>
+                      ) : <p className="text-xs text-gray-400">Not uploaded</p>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </AdminCard>
 
           <AdminCard className="p-5">

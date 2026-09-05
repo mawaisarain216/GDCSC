@@ -1,3 +1,4 @@
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import Link from "next/link";
 import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
@@ -39,7 +40,7 @@ export default async function AboutSection() {
           <h2 className="font-heading font-bold text-text mb-4">{title}</h2>
           <div
             className="prose-content text-text-muted"
-            dangerouslySetInnerHTML={{ __html: body }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(body) }}
           />
           <ul className="mt-4 space-y-2.5">
             {highlights.map((h) => (

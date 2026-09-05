@@ -5,7 +5,8 @@ import PageHero from "@/components/site/PageHero";
 import AdmissionFieldInput from "@/components/site/AdmissionFieldInput";
 import PhotoUploadField from "@/components/site/PhotoUploadField";
 import { submitApplication } from "./actions";
-import { GraduationCap, IdCard, ListChecks, Paperclip, ClipboardX, AlertTriangle } from "lucide-react";
+import { GraduationCap, IdCard, ListChecks, Paperclip, ClipboardX, AlertTriangle, ShieldCheck } from "lucide-react";
+import AdmissionSubmitButton from "./AdmissionSubmitButton";
 
 export const metadata: Metadata = { title: "Online Admission Form" };
 
@@ -84,7 +85,14 @@ export default async function ApplyPage({
               <span>Too many submissions have come from this connection in a short time. Please wait a few minutes and try again.</span>
             </div>
           )}
-          <form action={submitApplication} className="space-y-10">
+          <div className="mb-6 flex items-start gap-3 card-surface border border-black/5 p-4">
+            <ShieldCheck className="text-primary mt-0.5 shrink-0" size={20} />
+            <div>
+              <p className="text-sm font-semibold text-text">Secure online application</p>
+              <p className="text-xs text-text-muted">Required documents are uploaded securely. After submission, you will receive a reference number and a secure link to print your completed application.</p>
+            </div>
+          </div>
+          <form action={submitApplication} className="space-y-10" id="admission-application-form">
             {/* Honeypot — hidden from real applicants via CSS; bots that auto-fill every field trip this. */}
             <input
               type="text"
@@ -103,7 +111,7 @@ export default async function ApplyPage({
                   </h2>
                   <div className="grid sm:grid-cols-2 gap-x-6 gap-y-5">
                     {group.fields.map((field) => (
-                      <div key={field.id} className={field.fieldType === "textarea" || field.fieldType === "radio" ? "sm:col-span-2" : ""}>
+                      <div key={field.id} className={field.fieldType === "textarea" || field.fieldType === "radio" || field.fieldType === "file" ? "sm:col-span-2" : ""}>
                         <AdmissionFieldInput
                           field={field}
                           optionsOverride={field.fieldKey === "faculty" ? openFaculties : undefined}
@@ -131,9 +139,7 @@ export default async function ApplyPage({
               </label>
             </div>
 
-            <button type="submit" className="btn btn-solid w-full sm:w-auto justify-center px-10">
-              Submit Application
-            </button>
+            <AdmissionSubmitButton />
           </form>
         </div>
       </section>

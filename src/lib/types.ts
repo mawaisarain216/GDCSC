@@ -1,3 +1,23 @@
+export interface SocialLink {
+  id: string;
+  label: string;
+  platform: string;
+  url: string;
+  enabled: boolean;
+  showInTopBar: boolean;
+  showInFooter: boolean;
+  order: number;
+}
+
+export interface HeaderUtilityLink {
+  id: string;
+  label: string;
+  url: string;
+  enabled: boolean;
+  openInNewTab: boolean;
+  order: number;
+}
+
 export interface Settings {
   id: number;
   siteName: string;
@@ -13,6 +33,10 @@ export interface Settings {
   twitterUrl: string;
   youtubeUrl: string;
   instagramUrl: string;
+  socialLinksJson: string;
+  headerUtilityLinksJson: string;
+  topBarSocialLimit: number;
+  footerSocialLimit: number;
   metaTitle: string;
   metaDescription: string;
   affiliationText: string;

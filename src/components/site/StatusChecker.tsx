@@ -27,6 +27,7 @@ type State = {
     photoUrl: string;
     fullName: string;
     fatherName: string;
+    photoAccessToken: string;
   };
 };
 
@@ -132,7 +133,7 @@ export default function StatusChecker() {
                   <div className="w-16 h-20 rounded bg-bg border border-black/10 flex items-center justify-center overflow-hidden shrink-0">
                     {state.result.photoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={state.result.photoUrl} alt="Applicant" className="w-full h-full object-cover" />
+                      <img src={state.result.photoUrl.includes(".private.blob.vercel-storage.com") ? `/api/admission-file?ref=${encodeURIComponent(state.result.applicationNo)}&token=${encodeURIComponent(state.result.photoAccessToken)}&url=${encodeURIComponent(state.result.photoUrl)}` : state.result.photoUrl} alt="Applicant" className="w-full h-full object-cover" />
                     ) : (
                       <UserRound className="text-black/20" size={22} />
                     )}

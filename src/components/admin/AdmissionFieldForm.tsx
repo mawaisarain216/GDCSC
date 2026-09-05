@@ -10,27 +10,31 @@ const SECTIONS = [
 
 const TYPES = ["text", "select", "radio", "checkbox", "date", "textarea", "file"];
 
-export default function AdmissionFieldForm({
-  field,
-  action,
-}: {
-  field?: AdmissionFormField;
-  action: (formData: FormData) => void;
-}) {
+function fileKind(field?: AdmissionFormField) {
+  try {
+    const value = field ? JSON.parse(field.options || "[]")[0] : "";
+    return String(value || "IMAGE").toUpperCase();
+  } catch {
+    return "IMAGE";
+  }
+}
+
+export default function AdmissionFieldForm({ field, action }: { field?: AdmissionFormField; action: (formData: FormData) => void }) {
   let optionsStr = "";
   try {
     optionsStr = field ? (JSON.parse(field.options || "[]") as string[]).join(", ") : "";
   } catch {
     optionsStr = "";
   }
+  const kind = fileKind(field);
 
   return (
     <form action={action} className="space-y-5">
       <AdminCard className="p-5 space-y-5">
         <div className="grid sm:grid-cols-2 gap-5">
           <div>
-            <label className={labelClass}>Field Label</label>
-            <input name="label" required defaultValue={field?.label} className={inputClass} placeholder="Father's Occupation" />
+            <label className={labelClass}>Field Label / Document Category</label>
+            <input name="label" required defaultValue={field?.label} className={inputClass} placeholder="CNIC / B-Form" />
           </div>
           {!field && (
             <div>
@@ -59,9 +63,17 @@ export default function AdmissionFieldForm({
             <ToggleField name="enabled" label="Enabled" defaultChecked={field ? field.enabled === 1 : true} />
           </div>
         </div>
+
         <div>
-          <label className={labelClass}>Options (comma-separated — for Select / Radio only)</label>
-          <input name="options" defaultValue={optionsStr} className={inputClass} placeholder="Sindhi, Urdu" />
+          <label className={labelClass}>Options</label>
+          <input name="options" defaultValue={optionsStr} className={inputClass} placeholder="For Select/Radio: Sindhi, Urdu" />
+          <p className="text-xs text-gray-500 mt-1.5">
+            For a <strong>file</strong> field, enter exactly one of: <strong>IMAGE</strong>, <strong>PDF</strong>, or <strong>PDF/IMAGE</strong>.
+            The field label becomes the document category shown to the student.
+          </p>
+          {field?.fieldType === "file" && (
+            <p className="text-xs text-gray-500 mt-1">Current file type: <strong>{kind}</strong>. Recommended categories: CNIC/B-Form, Matric Certificate, Domicile, Character Certificate.</p>
+          )}
         </div>
       </AdminCard>
       <SubmitButton>{field ? "Update Field" : "Add Field"}</SubmitButton>

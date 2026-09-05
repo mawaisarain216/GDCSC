@@ -1,3 +1,4 @@
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import type { Metadata } from "next";
 import { getContent } from "@/lib/repo";
 import PageHero from "@/components/site/PageHero";
@@ -12,7 +13,7 @@ export default async function AboutPage() {
       <PageHero title="About the College" subtitle="Our history, mission and commitment to academic excellence." />
       <section className="section-y">
         <div className="container-site max-w-3xl">
-          <div className="prose-content text-text" dangerouslySetInnerHTML={{ __html: body }} />
+          <div className="prose-content text-text" dangerouslySetInnerHTML={{ __html: sanitizeHtml(body) }} />
 
           <div className="grid sm:grid-cols-2 gap-6 mt-10">
             <div className="card-surface border border-black/5 p-6">

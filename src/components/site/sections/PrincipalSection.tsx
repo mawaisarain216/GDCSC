@@ -1,3 +1,4 @@
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import Image from "next/image";
 import { Quote } from "lucide-react";
 import { getContent } from "@/lib/repo";
@@ -31,7 +32,7 @@ export default async function PrincipalSection() {
           </span>
           <div
             className="prose-content text-text text-lg leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: message }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(message) }}
           />
         </div>
       </div>

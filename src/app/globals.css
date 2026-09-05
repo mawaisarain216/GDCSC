@@ -232,10 +232,11 @@ h3 {
   overflow: hidden;
 }
 
-/* When printing a gate pass from the public status-checker page, hide
-   everything except the pass itself — otherwise the header/nav/footer print
-   along with it. */
+/* Admission print views hide the normal site chrome and keep the paper form clean. */
 @media print {
+  body.printing-admission-form header,
+  body.printing-admission-form footer,
+  body.printing-admission-form nav { display: none !important; }
   body.printing-gate-pass * {
     visibility: hidden;
   }

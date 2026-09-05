@@ -48,6 +48,10 @@ const CAMEL_COLUMNS = [
   "twitterUrl",
   "youtubeUrl",
   "instagramUrl",
+  "socialLinksJson",
+  "headerUtilityLinksJson",
+  "topBarSocialLimit",
+  "footerSocialLimit",
   "metaTitle",
   "metaDescription",
   "affiliationText",
@@ -148,6 +152,10 @@ const schemaStatements = [
     "twitterUrl" TEXT NOT NULL DEFAULT '',
     "youtubeUrl" TEXT NOT NULL DEFAULT '',
     "instagramUrl" TEXT NOT NULL DEFAULT '',
+    "socialLinksJson" TEXT NOT NULL DEFAULT '[]',
+    "headerUtilityLinksJson" TEXT NOT NULL DEFAULT '[]',
+    "topBarSocialLimit" INTEGER NOT NULL DEFAULT 5,
+    "footerSocialLimit" INTEGER NOT NULL DEFAULT 8,
     "metaTitle" TEXT NOT NULL DEFAULT '',
     "metaDescription" TEXT NOT NULL DEFAULT '',
     "affiliationText" TEXT NOT NULL DEFAULT '',
@@ -336,6 +344,12 @@ export async function initSchema(): Promise<void> {
         for (const statement of schemaStatements) {
           await client.query(statement);
         }
+
+        // Forward-compatible schema upgrades for databases created before dynamic settings.
+        await client.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS "socialLinksJson" TEXT NOT NULL DEFAULT '[]'`);
+        await client.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS "headerUtilityLinksJson" TEXT NOT NULL DEFAULT '[]'`);
+        await client.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS "topBarSocialLimit" INTEGER NOT NULL DEFAULT 5`);
+        await client.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS "footerSocialLimit" INTEGER NOT NULL DEFAULT 8`);
 
         // Forward-compatible schema upgrades for databases created before
         // the dynamic department-head relationship was introduced.
