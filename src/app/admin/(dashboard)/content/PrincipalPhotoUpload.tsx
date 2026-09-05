@@ -1,8 +1,8 @@
 ﻿"use client";
 
+import { upload } from "@vercel/blob/client";
 import { useRef, useState } from "react";
 import { ImagePlus, X, Loader2 } from "lucide-react";
-import { uploadPrincipalPhotoAction } from "./principal-photo-action";
 
 export default function PrincipalPhotoUpload({
   initialUrl,
@@ -19,17 +19,18 @@ export default function PrincipalPhotoUpload({
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("principalPhoto", file);
+      const blob = await upload(
+        `principal/${Date.now()}-${file.name}`,
+        file,
+        {
+          access: "public",
+          handleUploadUrl: "/api/blob-upload",
+        }
+      );
 
-      const result = await uploadPrincipalPhotoAction(formData);
-
-      if (result.error) {
-        setError(result.error);
-      } else if (result.url) {
-        setUrl(result.url);
-      }
-    } catch {
+      setUrl(blob.url);
+    } catch (err) {
+      console.error("Principal photo upload failed:", err);
       setError("Upload failed. Please try again.");
     } finally {
       setUploading(false);
@@ -39,7 +40,10 @@ export default function PrincipalPhotoUpload({
   function removePhoto() {
     setUrl("");
     setError("");
-    if (inputRef.current) inputRef.current.value = "";
+
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
   }
 
   return (
@@ -84,7 +88,10 @@ export default function PrincipalPhotoUpload({
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleUpload(file);
+
+              if (file) {
+                handleUpload(file);
+              }
             }}
           />
 
@@ -110,17 +117,24 @@ export default function PrincipalPhotoUpload({
           <p className="text-xs text-gray-400 mt-2">
             Recommended size: 400 × 400 px (JPG, PNG, WebP)
           </p>
+
           <p className="text-xs text-gray-400">
             Selected file will be uploaded and saved automatically.
           </p>
 
           {error && (
-            <p className="text-xs text-red-600 mt-2">{error}</p>
+            <p className="text-xs text-red-600 mt-2">
+              {error}
+            </p>
           )}
         </div>
       </div>
 
-      <input type="hidden" name="principal.photoUrl" value={url} />
+      <input
+        type="hidden"
+        name="principal.photoUrl"
+        value={url}
+      />
     </div>
   );
 }
